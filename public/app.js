@@ -36,7 +36,7 @@ function escapeHtml(value) {
 }
 
 function formatLlmAnswer(value) {
-  return escapeHtml(truncateText(value, 1100))
+  return escapeHtml(value)
     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
     .replace(/\n{3,}/g, '\n\n');
 }
@@ -147,7 +147,7 @@ function renderAnalysis(payload) {
     const dataset = payload.analysis.selectedDataset;
     const resource = payload.analysis.selectedResource;
     const summary = payload.analysis.analysisSummary || {};
-    const alternatives = payload.analysis.alternatives || [];
+    const alternatives = (payload.analysis.alternatives || []).filter((item) => Number(item.dataset?.score ?? 0) >= 8);
 
     parts.push(`
       <section class="analysis-block selected-dataset">
@@ -223,12 +223,16 @@ function renderAnalysis(payload) {
     `);
   }
 
-  if (payload.relatedDatasets?.recommendedBundle?.length) {
+  const recommendedBundle = (payload.relatedDatasets?.recommendedBundle || []).filter(
+    (item) => Number(item.dataset?.score ?? 0) >= 8
+  );
+
+  if (recommendedBundle.length) {
     parts.push(`
       <section class="analysis-block">
         <h3>İlgili Dataset Paketi</h3>
         <ul class="clean">
-          ${payload.relatedDatasets.recommendedBundle
+          ${recommendedBundle
             .slice(0, 8)
             .map((item) => `<li>${escapeHtml(item.dataset.title)} - skor ${escapeHtml(item.dataset.score)}</li>`)
             .join('')}

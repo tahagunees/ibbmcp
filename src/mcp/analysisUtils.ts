@@ -205,7 +205,7 @@ export function scoreDatasetForQuestion(
     normalizedQuestionTerms.includes('kent') &&
     normalizedQuestionTerms.some((term) => ['lokantasi', 'lokantası', 'lokantalari', 'lokantaları', 'lokanta'].includes(term));
   const isLocationQuestion = normalizedQuestionTerms.some((term) =>
-    ['konum', 'konumlari', 'konumları', 'lokasyon', 'lokasyonu', 'bolge', 'bölge', 'mahalle'].includes(term)
+    ['acmak', 'açmak', 'secmek', 'seçmek', 'konum', 'konumlari', 'konumları', 'lokasyon', 'lokasyonu', 'bolge', 'bölge', 'mahalle'].includes(term)
   );
   const haystack = normalizeForSearch(
     [

@@ -143,7 +143,7 @@ export async function suggestRelatedDatasetsForQuestion(args: {
     };
   }
 
-  const topCandidates = ranked.slice(0, args.maxDatasets ?? 6);
+  const topCandidates = ranked.filter((item) => item.score >= 8).slice(0, args.maxDatasets ?? 6);
   const enriched = await Promise.all(
     topCandidates.map(async (candidate) => {
       const detail = await getDatasetByName(candidate.dataset.name);
@@ -203,7 +203,7 @@ export async function suggestRelatedDatasetsForQuestion(args: {
     intent,
     queries,
     inferredThemes: questionThemes,
-    recommendedBundle: enriched.map((item) => ({
+    recommendedBundle: enriched.filter((item) => item.score >= 8).map((item) => ({
       dataset: {
         title: item.dataset.title,
         name: item.dataset.name,
@@ -265,7 +265,7 @@ export async function analyzeQuestion(args: {
     }))
     .sort((a, b) => b.score - a.score);
 
-  const selectedCandidates = ranked.slice(0, args.maxDatasets ?? 3);
+  const selectedCandidates = ranked.filter((item) => item.score >= 8).slice(0, args.maxDatasets ?? 3);
 
   if (!selectedCandidates.length) {
     return {
@@ -377,7 +377,7 @@ export async function analyzeQuestion(args: {
       decisionHints,
       limitations,
     },
-    alternatives: enrichedCandidates.slice(1).map((candidate) => ({
+    alternatives: enrichedCandidates.filter((candidate) => candidate.score >= 8).slice(1).map((candidate) => ({
       dataset: {
         title: candidate.dataset.title,
         name: candidate.dataset.name,

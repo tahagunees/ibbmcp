@@ -86,7 +86,7 @@ export function registerAnalysisTools(server: McpServer) {
         });
       }
 
-      const topCandidates = ranked.slice(0, args.maxDatasets ?? 6);
+      const topCandidates = ranked.filter((item) => item.score >= 8).slice(0, args.maxDatasets ?? 6);
 
       const enriched = await Promise.all(
         topCandidates.map(async (candidate) => {
@@ -147,7 +147,7 @@ export function registerAnalysisTools(server: McpServer) {
         intent,
         queries,
         inferredThemes: questionThemes,
-        recommendedBundle: enriched.map((item) => ({
+        recommendedBundle: enriched.filter((item) => item.score >= 8).map((item) => ({
           dataset: {
             title: item.dataset.title,
             name: item.dataset.name,
@@ -371,7 +371,7 @@ export function registerAnalysisTools(server: McpServer) {
         }))
         .sort((a, b) => b.score - a.score);
 
-      const selectedCandidates = ranked.slice(0, args.maxDatasets ?? 3);
+      const selectedCandidates = ranked.filter((item) => item.score >= 8).slice(0, args.maxDatasets ?? 3);
 
       if (!selectedCandidates.length) {
         return jsonToolOutput({
@@ -455,7 +455,7 @@ export function registerAnalysisTools(server: McpServer) {
           decisionHints,
           limitations,
         },
-        alternatives: enrichedCandidates.slice(1).map((candidate) => ({
+        alternatives: enrichedCandidates.filter((candidate) => candidate.score >= 8).slice(1).map((candidate) => ({
           dataset: {
             title: candidate.dataset.title,
             name: candidate.dataset.name,
