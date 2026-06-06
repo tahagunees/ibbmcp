@@ -22,18 +22,24 @@ function escapeHtml(value) {
     .replaceAll("'", '&#39;');
 }
 
+function formatLlmAnswer(value) {
+  return escapeHtml(truncateText(value, 900))
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\n{3,}/g, '\n\n');
+}
+
 function datasetCard(dataset) {
-  const tags = (dataset.tags || []).slice(0, 5).map((tag) => `<span class="meta-pill">${escapeHtml(tag)}</span>`).join('');
+  const tags = (dataset.tags || []).slice(0, 3).map((tag) => `<span class="meta-pill">${escapeHtml(tag)}</span>`).join('');
   const resources = (dataset.resources || [])
-    .slice(0, 3)
-    .map((resource) => `<span class="meta-pill">${escapeHtml(resource.format || 'n/a')} · ${escapeHtml(resource.name)}</span>`)
+    .slice(0, 2)
+    .map((resource) => `<span class="meta-pill">${escapeHtml(resource.format || 'n/a')}</span>`)
     .join('');
 
   return `
     <article class="result-card">
       <h3>${escapeHtml(dataset.title)}</h3>
-      <p><strong>${escapeHtml(dataset.name)}</strong></p>
-      <p>${escapeHtml(truncateText(dataset.notes || 'Aciklama yok.', 180))}</p>
+      <p class="dataset-name">${escapeHtml(dataset.name)}</p>
+      <p>${escapeHtml(truncateText(dataset.notes || 'Aciklama yok.', 150))}</p>
       <div class="meta-row">
         ${dataset.organization ? `<span class="meta-pill">${escapeHtml(dataset.organization)}</span>` : ''}
         ${dataset.metadataModified ? `<span class="meta-pill">${escapeHtml(dataset.metadataModified)}</span>` : ''}
@@ -69,7 +75,7 @@ function renderAnalysis(payload) {
     parts.push(`
       <section class="analysis-block">
         <h3>LLM Ozeti</h3>
-        <p>${escapeHtml(truncateText(payload.llm.answer, 420))}</p>
+        <div class="answer-text">${formatLlmAnswer(payload.llm.answer)}</div>
       </section>
     `);
   } else if (payload.llm?.error) {
@@ -88,11 +94,12 @@ function renderAnalysis(payload) {
     const alternatives = payload.analysis.alternatives || [];
 
     parts.push(`
-      <section class="analysis-block">
+      <section class="analysis-block selected-dataset">
         <h3>Secilen Dataset</h3>
-        <p><strong>${escapeHtml(dataset.title)}</strong> (${escapeHtml(dataset.name)})</p>
-        <p>Guven: ${escapeHtml(payload.analysis.confidence || 'bilinmiyor')} · Skor: ${escapeHtml(dataset.score)}</p>
-        <p>${escapeHtml(truncateText(dataset.notes || 'Aciklama yok.', 260))}</p>
+        <p><strong>${escapeHtml(dataset.title)}</strong></p>
+        <p class="dataset-name">${escapeHtml(dataset.name)}</p>
+        <p>Guven: ${escapeHtml(payload.analysis.confidence || 'bilinmiyor')} / Skor: ${escapeHtml(dataset.score)}</p>
+        <p>${escapeHtml(truncateText(dataset.notes || 'Aciklama yok.', 220))}</p>
         <div class="meta-row">
           ${dataset.organization ? `<span class="meta-pill">${escapeHtml(dataset.organization)}</span>` : ''}
           ${dataset.metadataModified ? `<span class="meta-pill">${escapeHtml(dataset.metadataModified)}</span>` : ''}
@@ -143,7 +150,7 @@ function renderAnalysis(payload) {
       parts.push(`
         <section class="analysis-block">
           <h3>Alternatifler</h3>
-          <ul class="clean">${alternatives.slice(0, 3).map((item) => `<li>${escapeHtml(item.dataset.title)} (${escapeHtml(item.dataset.name)}) · skor ${escapeHtml(item.dataset.score)}</li>`).join('')}</ul>
+          <ul class="clean">${alternatives.slice(0, 3).map((item) => `<li>${escapeHtml(item.dataset.title)} - skor ${escapeHtml(item.dataset.score)}</li>`).join('')}</ul>
         </section>
       `);
     }
@@ -162,7 +169,7 @@ function renderAnalysis(payload) {
         <h3>Ilgili Dataset Paketleri</h3>
         <ul class="clean">
           ${payload.relatedDatasets.recommendedBundle
-            .map((item) => `<li>${escapeHtml(item.dataset.title)} (${escapeHtml(item.dataset.name)}) · skor ${escapeHtml(item.dataset.score)}</li>`)
+            .map((item) => `<li>${escapeHtml(item.dataset.title)} - skor ${escapeHtml(item.dataset.score)}</li>`)
             .join('')}
         </ul>
       </section>
@@ -190,10 +197,10 @@ async function loadConfig() {
 
     healthText.textContent = health.ok ? 'Servis ayakta' : 'Servis hatali';
     llmText.textContent = config.llmConfigured
-      ? `LLM hazir: ${config.llmProvider} / ${config.llmModel}`
-      : 'LLM bagli degil. Yalnizca veri analizi kullanilabilir.';
+      ? `${config.llmProvider} / ${config.llmModel}`
+      : 'Kapali';
   } catch (error) {
-    healthText.textContent = 'Erisesim hatasi';
+    healthText.textContent = 'Erisim hatasi';
     llmText.textContent = error.message;
   }
 }
@@ -210,7 +217,7 @@ async function loadRecentDatasets() {
 analysisForm.addEventListener('submit', async (event) => {
   event.preventDefault();
   analyzeButton.disabled = true;
-  analyzeButton.textContent = 'Analiz suruyor...';
+  analyzeButton.textContent = 'Analiz ediliyor...';
   analysisResults.textContent = 'Veri setleri taraniyor...';
 
   const body = {
@@ -231,7 +238,7 @@ analysisForm.addEventListener('submit', async (event) => {
     analysisResults.textContent = error.message;
   } finally {
     analyzeButton.disabled = false;
-    analyzeButton.textContent = 'Analiz Et';
+    analyzeButton.textContent = 'Analiz et';
   }
 });
 
