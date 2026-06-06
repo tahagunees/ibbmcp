@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { searchDatasets, getDatasetByName, profileResource, inferResourceCapabilities, type CkanDatasetSummary } from '../../adapters/ckan';
 import { jsonToolOutput, summarizeResource, compactText } from '../utils';
-import { buildAnalysisQueries, extractQuestionTerms, inferQuestionIntent, scoreDatasetForQuestion, pickBestResourceForAnalysis, summarizeProfileInsights, computeConfidence, inferQuestionThemes, inferDatasetThemes } from '../analysisUtils';
+import { buildAnalysisQueries, extractQuestionTerms, inferQuestionIntent, scoreDatasetForQuestion, pickBestResourceForAnalysis, summarizeProfileInsights, computeConfidence, inferQuestionThemes, inferDatasetThemes, normalizeForSearch } from '../analysisUtils';
 
 export function registerAnalysisTools(server: McpServer) {
   server.registerTool(
@@ -50,6 +50,19 @@ export function registerAnalysisTools(server: McpServer) {
           const themeOverlap = datasetThemes
             .filter((themeInfo) => questionThemes.some((qTheme) => qTheme.theme === themeInfo.theme))
             .reduce((sum, item) => sum + item.score, 0);
+          const cappedThemeOverlap = Math.min(themeOverlap, 30);
+          const normalizedTerms = questionTerms.map((term) => normalizeForSearch(term));
+          const isKentLokantasiQuestion =
+            normalizedTerms.includes('kent') &&
+            normalizedTerms.some((term) => ['lokantasi', 'lokantası', 'lokantalari', 'lokantaları', 'lokanta'].includes(term));
+          const datasetText = normalizeForSearch(`${dataset.title} ${dataset.name}`);
+          const primaryDomainBoost =
+            isKentLokantasiQuestion &&
+            ['kent lokantalari', 'kent lokantaları', 'kent lokantasi', 'kent lokantası'].some((term) =>
+              datasetText.includes(normalizeForSearch(term))
+            )
+              ? 200
+              : 0;
 
           return {
             dataset,
@@ -57,7 +70,8 @@ export function registerAnalysisTools(server: McpServer) {
             datasetThemes,
             score:
               scoreDatasetForQuestion(dataset, questionTerms, intent, Array.from(matchedQueries)) +
-              themeOverlap,
+              primaryDomainBoost +
+              cappedThemeOverlap,
           };
         })
         .sort((a, b) => b.score - a.score);

@@ -15,6 +15,7 @@ import {
   inferQuestionThemes,
   pickBestResourceForAnalysis,
   scoreDatasetForQuestion,
+  normalizeForSearch,
   summarizeProfileInsights,
 } from '../mcp/analysisUtils';
 import { compactText, summarizeDataset, summarizeResource } from '../mcp/utils';
@@ -103,6 +104,19 @@ export async function suggestRelatedDatasetsForQuestion(args: {
       const themeOverlap = datasetThemes
         .filter((themeInfo) => questionThemes.some((qTheme) => qTheme.theme === themeInfo.theme))
         .reduce((sum, item) => sum + item.score, 0);
+      const cappedThemeOverlap = Math.min(themeOverlap, 30);
+      const normalizedTerms = questionTerms.map((term) => normalizeForSearch(term));
+      const isKentLokantasiQuestion =
+        normalizedTerms.includes('kent') &&
+        normalizedTerms.some((term) => ['lokantasi', 'lokantası', 'lokantalari', 'lokantaları', 'lokanta'].includes(term));
+      const datasetText = normalizeForSearch(`${dataset.title} ${dataset.name}`);
+      const primaryDomainBoost =
+        isKentLokantasiQuestion &&
+        ['kent lokantalari', 'kent lokantaları', 'kent lokantasi', 'kent lokantası'].some((term) =>
+          datasetText.includes(normalizeForSearch(term))
+        )
+          ? 200
+          : 0;
 
       return {
         dataset,
@@ -110,7 +124,8 @@ export async function suggestRelatedDatasetsForQuestion(args: {
         datasetThemes,
         score:
           scoreDatasetForQuestion(dataset, questionTerms, intent, Array.from(matchedQueries)) +
-          themeOverlap,
+          primaryDomainBoost +
+          cappedThemeOverlap,
       };
     })
     .sort((a, b) => b.score - a.score);

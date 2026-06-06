@@ -52,6 +52,7 @@ export const TURKISH_STOP_WORDS = new Set([
 const NORMALIZED_STOP_WORDS = new Set(Array.from(TURKISH_STOP_WORDS).map((word) => normalizeForSearch(word)));
 
 export const DOMAIN_HINTS: { query: string; keywords: string[] }[] = [
+  { query: 'kent lokantalari', keywords: ['kent lokantasi', 'kent lokantası', 'kent lokantalari', 'kent lokantaları'] },
   { query: 'trafik', keywords: ['trafik', 'yogunluk', 'yoğunluk', 'ulasim', 'ulaşım', 'kaza'] },
   { query: 'okul', keywords: ['okul', 'ogrenci', 'öğrenci', 'egitim', 'eğitim'] },
   { query: 'restoran', keywords: ['restoran', 'lokanta', 'pizzaci', 'pizzacı', 'yeme', 'yemek'] },
@@ -199,6 +200,13 @@ export function scoreDatasetForQuestion(
   intent: string,
   matchedQueries: string[]
 ): number {
+  const normalizedQuestionTerms = questionTerms.map((term) => normalizeForSearch(term));
+  const isKentLokantasiQuestion =
+    normalizedQuestionTerms.includes('kent') &&
+    normalizedQuestionTerms.some((term) => ['lokantasi', 'lokantası', 'lokantalari', 'lokantaları', 'lokanta'].includes(term));
+  const isLocationQuestion = normalizedQuestionTerms.some((term) =>
+    ['konum', 'konumlari', 'konumları', 'lokasyon', 'lokasyonu', 'bolge', 'bölge', 'mahalle'].includes(term)
+  );
   const haystack = normalizeForSearch(
     [
       dataset.title,
@@ -210,6 +218,34 @@ export function scoreDatasetForQuestion(
   );
 
   let score = 0;
+  const exactDomainBoosts = [
+    {
+      active: isKentLokantasiQuestion,
+      terms: ['kent lokantalari', 'kent lokantaları', 'kent lokantasi', 'kent lokantası'],
+      boost: 45,
+    },
+    {
+      active: isKentLokantasiQuestion && isLocationQuestion,
+      terms: ['konum', 'konumlari', 'konumları', 'lokasyon'],
+      boost: 28,
+    },
+  ];
+
+  for (const boost of exactDomainBoosts) {
+    if (boost.active && boost.terms.some((term) => haystack.includes(normalizeForSearch(term)))) {
+      score += boost.boost;
+    }
+  }
+
+  if (
+    isKentLokantasiQuestion &&
+    !['kent lokantalari', 'kent lokantaları', 'kent lokantasi', 'kent lokantası'].some((term) =>
+      haystack.includes(normalizeForSearch(term))
+    )
+  ) {
+    score -= 35;
+  }
+
   for (const term of questionTerms) {
     if (containsNormalizedTerm(haystack, term)) score += 4;
   }
@@ -217,7 +253,7 @@ export function scoreDatasetForQuestion(
   const queryWeights =
     intent === 'decision-support'
       ? {
-          trafik: 6, okul: 6, isyeri: 6, restoran: 5, nufus: 5, metro: 4, cografi: 4, mahalle: 2,
+          'kent lokantalari': 20, trafik: 6, okul: 6, isyeri: 6, restoran: 5, nufus: 5, metro: 4, cografi: 4, mahalle: 2,
         }
       : {};
 
@@ -228,6 +264,7 @@ export function scoreDatasetForQuestion(
 
   if (intent === 'decision-support') {
     const strategicTerms = [
+      'kent lokantalari', 'kent lokantaları', 'kent lokantasi', 'kent lokantası',
       'trafik', 'okul', 'ogrenci', 'öğrenci', 'isyeri', 'işyeri', 'isletme', 'işletme',
       'ulasim', 'ulaşım', 'restoran', 'lokanta', 'nufus', 'nüfus', 'mahalle', 'cadde',
     ];
