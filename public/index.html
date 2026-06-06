@@ -4,101 +4,191 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>MCP City Agent</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Material+Symbols+Outlined:wght@300;400;500;600&display=swap"
+      rel="stylesheet"
+    />
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
-    <div class="app-shell">
+    <div class="bg-orb bg-orb-a"></div>
+    <div class="bg-orb bg-orb-b"></div>
+    <div class="noise-layer" aria-hidden="true"></div>
+
+    <aside class="side-rail">
+      <div class="brand-block">
+        <p class="brand-kicker">İBB Data</p>
+        <h1>Data Node</h1>
+        <span id="railLlmText">LLM bağlanıyor</span>
+      </div>
+
+      <button class="rail-action" id="newQueryButton" type="button">
+        <span class="material-symbols-outlined">add</span>
+        Yeni Sorgu
+      </button>
+
+      <nav class="rail-nav" aria-label="Ana menü">
+        <a class="active" href="#analysisForm">
+          <span class="material-symbols-outlined">dashboard</span>
+          Dashboard
+        </a>
+        <a href="#analysisResults">
+          <span class="material-symbols-outlined">monitoring</span>
+          City Metrics
+        </a>
+        <a href="#searchForm">
+          <span class="material-symbols-outlined">database</span>
+          Dataset Explorer
+        </a>
+        <a href="#recentDatasets">
+          <span class="material-symbols-outlined">smart_toy</span>
+          Agent Settings
+        </a>
+        <a href="#analysisResults">
+          <span class="material-symbols-outlined">history</span>
+          Audit Log
+        </a>
+      </nav>
+
+      <div class="rail-footer">
+        <a href="#searchForm">
+          <span class="material-symbols-outlined">help</span>
+          Support
+        </a>
+        <a href="#statusBar">
+          <span class="material-symbols-outlined">sensors</span>
+          API Status
+        </a>
+      </div>
+    </aside>
+
+    <div class="app-frame">
       <header class="topbar">
-        <div>
-          <p class="app-kicker">IBB Acik Veri</p>
-          <h1>MCP City Agent</h1>
+        <div class="topbar-title">
+          <button class="mobile-menu" type="button" aria-label="Menü">
+            <span class="material-symbols-outlined">menu</span>
+          </button>
+          <h2>MCP City Agent</h2>
         </div>
-        <div class="status-strip" aria-live="polite">
-          <div class="status-item">
-            <span class="status-dot" aria-hidden="true"></span>
-            <div>
-              <span>Servis</span>
-              <strong id="healthText">Baglaniyor...</strong>
-            </div>
+
+        <div class="status-pill" id="statusBar" aria-live="polite">
+          <div>
+            <span>API</span>
+            <i class="status-dot"></i>
+            <strong id="healthText">Bağlanıyor</strong>
           </div>
-          <div class="status-item">
-            <div>
-              <span>LLM</span>
-              <strong id="llmText">Kontrol ediliyor</strong>
-            </div>
+          <div>
+            <span>LLM</span>
+            <strong id="llmText">Kontrol ediliyor</strong>
           </div>
+        </div>
+
+        <div class="topbar-icons" aria-hidden="true">
+          <span class="material-symbols-outlined">account_tree</span>
+          <span class="material-symbols-outlined">memory</span>
+          <span class="material-symbols-outlined notification-icon">notifications</span>
         </div>
       </header>
 
-      <main class="workspace">
-        <section class="main-column">
-          <section class="panel query-panel">
-            <div class="panel-head">
-              <h2>Soru</h2>
-              <span class="tag">Analiz</span>
+      <main class="dashboard">
+        <section class="work-column">
+          <section class="glass-card query-card animate-in">
+            <div class="card-rim"></div>
+            <div class="section-title">
+              <span class="material-symbols-outlined">terminal</span>
+              <h3>Agent Query</h3>
             </div>
 
             <form id="analysisForm" class="query-form">
-              <label for="questionInput">Sehir verisi sorusu</label>
-              <textarea
-                id="questionInput"
-                name="question"
-                rows="4"
-                placeholder="Kadikoy'de yeni bir kent lokantasi acmak icin hangi veri setlerine bakmaliyim?"
-              ></textarea>
-
-              <div class="control-row">
-                <label>
-                  <span>Aday veri seti</span>
-                  <input id="maxDatasetsInput" name="maxDatasets" type="number" min="1" max="5" value="3" />
-                </label>
-                <label>
-                  <span>Ornek kayit</span>
-                  <input id="sampleSizeInput" name="sampleSize" type="number" min="1" max="25" value="10" />
-                </label>
-                <label class="switch-row">
-                  <input id="useLlmInput" name="useLlm" type="checkbox" checked />
-                  <span>LLM ozeti</span>
-                </label>
+              <label class="sr-only" for="questionInput">Şehir verisi sorusu</label>
+              <div class="textarea-shell">
+                <textarea
+                  id="questionInput"
+                  name="question"
+                  rows="5"
+                  placeholder="Kadıköy’de yeni bir kent lokantası lokasyonu seçmek için hangi veri setlerine bakmalıyım?"
+                ></textarea>
+                <div class="ai-ready">
+                  <span class="material-symbols-outlined">auto_awesome</span>
+                  Hazır
+                </div>
               </div>
 
-              <div class="actions">
-                <button type="submit" id="analyzeButton" class="primary">Analiz et</button>
+              <div class="control-dock">
+                <label>
+                  <span>Dataset Count</span>
+                  <input id="maxDatasetsInput" name="maxDatasets" type="number" min="1" max="5" value="5" />
+                </label>
+                <label>
+                  <span>Sample Rows</span>
+                  <input id="sampleSizeInput" name="sampleSize" type="number" min="1" max="25" value="10" />
+                </label>
+                <label class="toggle-control">
+                  <input id="useLlmInput" name="useLlm" type="checkbox" checked />
+                  <span class="toggle-track"><span></span></span>
+                  <b>LLM Summary</b>
+                </label>
+                <button type="submit" id="analyzeButton" class="primary-action">
+                  <span class="material-symbols-outlined">bolt</span>
+                  Analiz Et
+                </button>
               </div>
             </form>
           </section>
 
-          <section class="panel result-panel">
-            <div class="panel-head">
-              <h2>Sonuc</h2>
-              <span class="tag tag-muted">Karar destegi</span>
+          <section class="glass-card results-card animate-in delay-1">
+            <div class="result-grid-bg" aria-hidden="true"></div>
+            <div id="analysisResults" class="analysis-results empty-state">
+              <div class="empty-core">
+                <div class="empty-icon">
+                  <span class="material-symbols-outlined">insights</span>
+                </div>
+                <h3>Analiz sonucu burada görünecek.</h3>
+                <p>Hazır.</p>
+              </div>
             </div>
-            <div id="analysisResults" class="analysis-results empty-state">Henuz analiz calistirilmadi.</div>
           </section>
         </section>
 
-        <aside class="side-column">
-          <section class="panel">
-            <div class="panel-head">
-              <h2>Veri ara</h2>
-              <span class="tag tag-muted">CKAN</span>
+        <aside class="support-column">
+          <section class="glass-card side-card animate-in delay-1">
+            <div class="side-title">
+              <span class="material-symbols-outlined">search</span>
+              <h3>Veri Ara</h3>
             </div>
             <form id="searchForm" class="search-form">
-              <label for="searchInput">Anahtar kelime</label>
-              <div class="search-row">
-                <input id="searchInput" name="query" type="text" placeholder="trafik, otopark, mahalle..." />
-                <button type="submit" class="secondary">Ara</button>
-              </div>
+              <label class="sr-only" for="searchInput">Anahtar kelime</label>
+              <input id="searchInput" name="query" type="text" placeholder="Veri seti, etiket veya kategori..." />
+              <button type="submit" aria-label="Ara">
+                <span class="material-symbols-outlined">arrow_forward</span>
+              </button>
             </form>
             <div id="searchResults" class="result-list empty-state">Arama sonucu yok.</div>
           </section>
 
-          <section class="panel">
-            <div class="panel-head">
-              <h2>Guncel</h2>
-              <span class="tag tag-muted">Son veri setleri</span>
+          <section class="glass-card side-card animate-in delay-2">
+            <div class="side-title">
+              <span class="material-symbols-outlined">flash_on</span>
+              <h3>Hızlı Demo Promptları</h3>
             </div>
-            <div id="recentDatasets" class="result-list compact-list empty-state">Yukleniyor...</div>
+            <div class="prompt-chips">
+              <button type="button" data-prompt="kent">Kent lokantası</button>
+              <button type="button" data-prompt="trafik">Trafik yoğunluğu</button>
+              <button type="button" data-prompt="otopark">Otopark ihtiyacı</button>
+            </div>
+          </section>
+
+          <section class="glass-card side-card recent-card animate-in delay-3">
+            <div class="side-title with-link">
+              <div>
+                <span class="material-symbols-outlined">source</span>
+                <h3>Güncel Veri Setleri</h3>
+              </div>
+              <button type="button" id="refreshRecentButton">Yenile</button>
+            </div>
+            <div id="recentDatasets" class="result-list compact-list empty-state">Yükleniyor...</div>
           </section>
         </aside>
       </main>
