@@ -25,6 +25,22 @@ function isRetryableGeminiError(error: unknown) {
   return axios.isAxiosError(error) && [429, 500, 502, 503, 504].includes(error.response?.status ?? 0);
 }
 
+function wantsDetailedReport(question: string) {
+  const normalized = question.toLocaleLowerCase('tr-TR');
+  return [
+    'analiz',
+    'rapor',
+    'istatistik',
+    'istatistiksel',
+    'karşılaştır',
+    'karsilastir',
+    'metrik',
+    'grafik',
+    'trend',
+    'bulgu',
+  ].some((keyword) => normalized.includes(keyword));
+}
+
 function toProviderError(provider: ProviderName, error: unknown): Error {
   if (axios.isAxiosError(error)) {
     const status = error.response?.status;
@@ -258,16 +274,30 @@ export async function generateCityAnswer(args: GenerateAnswerArgs) {
     );
   }
 
+  const detailedReport = wantsDetailedReport(args.question);
+  const responseMode = detailedReport
+    ? [
+        'Kullanici analiz/rapor istiyor. Kisa ozetle yetinme.',
+        'Cevabi "Analiz Raporu" formatinda yaz.',
+        'Bolumler: 1) Amac, 2) Kullanilan veri seti ve kaynak yapisi, 3) Alan/profil yorumu, 4) Yapilabilecek istatistiksel analizler, 5) Onerilen grafikler, 6) Bulgularin nasil yorumlanacagi, 7) Veri kalitesi ve sinirlar, 8) Karar verici icin aksiyon onerileri.',
+        'Analiz JSONunda olmayan sayisal bulgu uydurma; veri yoksa "bu analiz icin ek hesaplama gerekir" de.',
+        'Somut metrik isimleri, grafik onerileri ve karar destek yorumlari ver.',
+      ].join(' ')
+    : [
+        'Kullanici genel karar destegi istiyor. Once kisa sonuc, sonra kullanilan veri seti mantigi ve sinirlar olsun.',
+      ].join(' ');
+
   const messages: ChatMessage[] = [
     {
       role: 'system',
       content:
-        'Sen Istanbul acik veri odakli bir sehir analizi asistansin. Kullaniciya Turkce, net, ihtiyatli ve veri sinirlarini acikca belirten cevap ver. Uydurma bilgi ekleme. Belirsizlik varsa bunu soyle. Cevapta once kisa sonuc, sonra kullanilan veri seti mantigi ve sinirlar olsun.',
+        'Sen Istanbul acik veri odakli bir sehir analizi asistansin. Kullaniciya Turkce, net, ihtiyatli ve veri sinirlarini acikca belirten cevap ver. Uydurma bilgi ekleme. Belirsizlik varsa bunu soyle. Verilen analiz JSONuna dayan, kaynakta olmayan degerleri kesin bilgi gibi yazma.',
     },
     {
       role: 'user',
       content: [
         `Kullanici sorusu: ${args.question}`,
+        `Cevap modu talimati: ${responseMode}`,
         'Analiz cikti JSON:',
         JSON.stringify(args.analysis, null, 2),
         'Ilgili veri setleri JSON:',
