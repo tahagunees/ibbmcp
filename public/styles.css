@@ -516,7 +516,7 @@ textarea:focus + .ai-ready {
 
 .control-dock {
   display: grid;
-  grid-template-columns: auto auto minmax(160px, 1fr) auto;
+  grid-template-columns: minmax(180px, 1fr) auto;
   align-items: center;
   gap: 18px;
   padding: 14px;
@@ -539,19 +539,6 @@ textarea:focus + .ai-ready {
   font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-}
-
-.control-dock input[type="number"] {
-  width: 70px;
-  height: 38px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 7px;
-  outline: 0;
-  color: var(--ink);
-  background: rgba(5, 14, 28, 0.72);
-  text-align: center;
-  font-family: var(--mono);
-  font-size: 0.94rem;
 }
 
 .toggle-control {

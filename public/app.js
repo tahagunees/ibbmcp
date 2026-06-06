@@ -288,8 +288,8 @@ analysisForm.addEventListener('submit', async (event) => {
 
   const body = {
     question: questionInput.value,
-    maxDatasets: Number(document.getElementById('maxDatasetsInput').value || '5'),
-    sampleSize: Number(document.getElementById('sampleSizeInput').value || '10'),
+    maxDatasets: 5,
+    sampleSize: 10,
     useLlm: document.getElementById('useLlmInput').checked,
   };
 
