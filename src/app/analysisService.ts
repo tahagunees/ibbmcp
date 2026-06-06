@@ -2,7 +2,9 @@ import {
   getDatasetByName,
   inferResourceCapabilities,
   listDatasets,
+  previewFileResource,
   profileResource,
+  queryDatastoreResource,
   searchDatasets,
   type CkanDatasetSummary,
 } from '../adapters/ckan';
@@ -19,6 +21,7 @@ import {
   summarizeProfileInsights,
 } from '../mcp/analysisUtils';
 import { compactText, summarizeDataset, summarizeResource } from '../mcp/utils';
+import { computeRecordStatistics } from './statistics';
 
 export async function searchDatasetCatalog(query: string, rows = 8) {
   const result = await searchDatasets(query, rows);
@@ -289,6 +292,7 @@ export async function analyzeQuestion(args: {
       const selectedCapability = selectedResource ? inferResourceCapabilities(selectedResource) : undefined;
 
       let profile: Awaited<ReturnType<typeof profileResource>> | undefined;
+      let computedStatistics: ReturnType<typeof computeRecordStatistics> | undefined;
       let profileError: string | undefined;
 
       if (selectedResource) {
@@ -297,6 +301,27 @@ export async function analyzeQuestion(args: {
             resourceId: selectedResource.id,
             sampleSize: args.sampleSize ?? 10,
           });
+
+          const statisticsSampleSize = Math.max(25, Math.min(args.sampleSize ?? 50, 100));
+          let records: Record<string, unknown>[] = [];
+          if (selectedCapability?.datastoreQueryable) {
+            const result = await queryDatastoreResource({
+              resourceId: selectedResource.id,
+              limit: statisticsSampleSize,
+              offset: 0,
+            });
+            records = result.records as Record<string, unknown>[];
+          } else if (selectedCapability?.fileDownloadable) {
+            const preview = await previewFileResource({
+              resourceId: selectedResource.id,
+              maxRows: statisticsSampleSize,
+            });
+            records = preview.records ?? [];
+          }
+
+          if (records.length) {
+            computedStatistics = computeRecordStatistics(records);
+          }
         } catch (error) {
           profileError = error instanceof Error ? error.message : 'Profil alinamadi';
         }
@@ -309,6 +334,7 @@ export async function analyzeQuestion(args: {
         selectedResource,
         selectedCapability,
         profile,
+        computedStatistics,
         profileError,
       };
     })
@@ -316,6 +342,7 @@ export async function analyzeQuestion(args: {
 
   const best = enrichedCandidates[0]!;
   const bestInsights = best.profile ? summarizeProfileInsights(best.profile) : [];
+  const computedInsights = best.computedStatistics?.insightSentences ?? [];
   const limitations = [
     best.selectedCapability?.recommendedAccessMethod === 'api'
       ? 'Secilen resource API tipinde; bu kaynak icin ozel adapter henuz eklenmedi.'
@@ -374,6 +401,8 @@ export async function analyzeQuestion(args: {
             : 'Kaynak metadata duzeyinde degerlendirildi.',
       ],
       profileInsights: bestInsights,
+      computedDataInsights: computedInsights,
+      computedStatistics: best.computedStatistics ?? null,
       decisionHints,
       limitations,
     },

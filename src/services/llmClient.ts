@@ -280,6 +280,7 @@ export async function generateCityAnswer(args: GenerateAnswerArgs) {
         'Kullanici analiz/rapor istiyor. Kisa ozetle yetinme.',
         'Cevabi "Analiz Raporu" formatinda yaz.',
         'Bolumler: 1) Amac, 2) Kullanilan veri seti ve kaynak yapisi, 3) Alan/profil yorumu, 4) Yapilabilecek istatistiksel analizler, 5) Onerilen grafikler, 6) Bulgularin nasil yorumlanacagi, 7) Veri kalitesi ve sinirlar, 8) Karar verici icin aksiyon onerileri.',
+        'Analiz JSONunda analysisSummary.computedStatistics veya computedDataInsights varsa bunlari raporun bulgular ve metrikler bolumunde mutlaka kullan.',
         'Analiz JSONunda olmayan sayisal bulgu uydurma; veri yoksa "bu analiz icin ek hesaplama gerekir" de.',
         'Somut metrik isimleri, grafik onerileri ve karar destek yorumlari ver.',
       ].join(' ')

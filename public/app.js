@@ -170,9 +170,10 @@ function renderAnalysis(payload) {
 
     const why = (summary.whyThisDataset || []).slice(0, 3);
     const profile = (summary.profileInsights || []).slice(0, 3);
+    const computed = (summary.computedDataInsights || []).slice(0, 4);
     const hints = (summary.decisionHints || []).slice(0, 3);
 
-    if (why.length || profile.length || hints.length) {
+    if (why.length || profile.length || computed.length || hints.length) {
       parts.push(`
         <section class="summary-grid">
           ${why.length ? `
@@ -185,6 +186,12 @@ function renderAnalysis(payload) {
             <article class="summary-card">
               <h3>Profil</h3>
               <ul class="clean">${profile.map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ul>
+            </article>
+          ` : ''}
+          ${computed.length ? `
+            <article class="summary-card">
+              <h3>Veriden Hesaplanan Bulgular</h3>
+              <ul class="clean">${computed.map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ul>
             </article>
           ` : ''}
           ${hints.length ? `
