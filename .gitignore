@@ -1,0 +1,9 @@
+node_modules
+dist
+.env
+.codex_tmp
+npm-debug.log*
+/test_*.js
+/test_*.js.map
+/test_*.d.ts
+/test_*.d.ts.map

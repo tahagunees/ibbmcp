@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MCP City Agent Web</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="hero">
+        <div class="hero-copy">
+          <p class="eyebrow">MCP City Agent</p>
+          <h1>MCP Tabanli Acik Sehir Verisi Ajani</h1>
+          <p class="lede">
+            IBB acik veri katalogunu tarar, uygun veri setlerini secer ve kullanici sorularini
+            aciklanabilir bicimde analiz eder.
+          </p>
+          <div class="hero-points">
+            <span>Katalog tarama</span>
+            <span>Kaynak secimi</span>
+            <span>LLM destekli yorum</span>
+          </div>
+        </div>
+        <div class="hero-status">
+          <div class="status-card">
+            <span class="status-label">Durum</span>
+            <strong id="healthText">Baglaniyor...</strong>
+            <p id="llmText">LLM durumu kontrol ediliyor.</p>
+          </div>
+        </div>
+      </header>
+
+      <main class="layout">
+        <section class="panel panel-accent">
+          <div class="panel-head">
+            <h2>Arastirma Sorusu</h2>
+            <span class="chip">MCP + LLM</span>
+          </div>
+          <form id="analysisForm" class="stack">
+            <label for="questionInput">Soru</label>
+            <textarea
+              id="questionInput"
+              name="question"
+              rows="4"
+              placeholder="Ornek: Kadikoy'de yeni bir kent lokantasi acmak icin hangi veri setlerine bakmaliyim?"
+            ></textarea>
+
+            <div class="form-row">
+              <label class="inline-field">
+                <span>Aday veri seti</span>
+                <input id="maxDatasetsInput" name="maxDatasets" type="number" min="1" max="5" value="3" />
+              </label>
+              <label class="inline-field">
+                <span>Ornek kayit</span>
+                <input id="sampleSizeInput" name="sampleSize" type="number" min="1" max="25" value="10" />
+              </label>
+            </div>
+
+            <label class="toggle">
+              <input id="useLlmInput" name="useLlm" type="checkbox" checked />
+              <span>Uygunsa LLM ozeti uret</span>
+            </label>
+
+            <div class="actions">
+              <button type="submit" id="analyzeButton">Analiz Et</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <h2>Hizli Arama</h2>
+            <span class="chip chip-muted">Canli CKAN</span>
+          </div>
+          <form id="searchForm" class="stack">
+            <label for="searchInput">Anahtar kelime</label>
+            <input id="searchInput" name="query" type="text" placeholder="trafik, otopark, mahalle, egitim..." />
+            <div class="actions">
+              <button type="submit" class="secondary">Ara</button>
+            </div>
+          </form>
+          <div id="searchResults" class="result-list empty-state">Arama sonucu burada gosterilecek.</div>
+        </section>
+
+        <section class="panel full-span">
+          <div class="panel-head">
+            <h2>Onerilen Veri Seti</h2>
+            <span class="chip chip-warm">Karar Destegi</span>
+          </div>
+          <div id="analysisResults" class="stack empty-state">Henuz bir analiz calistirilmadi.</div>
+        </section>
+
+        <section class="panel full-span">
+          <div class="panel-head">
+            <h2>Ornek Veri Setleri</h2>
+            <span class="chip chip-muted">metadata_modified desc</span>
+          </div>
+          <div id="recentDatasets" class="result-list empty-state">Yukleniyor...</div>
+        </section>
+      </main>
+    </div>
+
+    <script src="/app.js"></script>
+  </body>
+  </html>
