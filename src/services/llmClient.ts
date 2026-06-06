@@ -13,6 +13,17 @@ interface GenerateAnswerArgs {
 }
 
 type ProviderName = 'openai-compatible' | 'gemini' | 'deepseek';
+const geminiFallbackModel = 'gemini-2.5-flash-lite';
+
+function wait(ms: number) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
+
+function isRetryableGeminiError(error: unknown) {
+  return axios.isAxiosError(error) && [429, 500, 502, 503, 504].includes(error.response?.status ?? 0);
+}
 
 function toProviderError(provider: ProviderName, error: unknown): Error {
   if (axios.isAxiosError(error)) {
@@ -176,6 +187,7 @@ async function callGeminiGenerateContent(args: {
   apiKey: string;
   model: string;
   messages: ChatMessage[];
+  fallbackTried?: boolean;
 }) {
   const systemMessage = args.messages.find((message) => message.role === 'system');
   const userMessages = args.messages.filter((message) => message.role !== 'system');
@@ -210,6 +222,15 @@ async function callGeminiGenerateContent(args: {
       }
     );
   } catch (error) {
+    if (isRetryableGeminiError(error) && !args.fallbackTried) {
+      await wait(1200);
+      return callGeminiGenerateContent({
+        ...args,
+        model: args.model === geminiFallbackModel ? args.model : geminiFallbackModel,
+        fallbackTried: true,
+      });
+    }
+
     throw toProviderError('gemini', error);
   }
 
@@ -223,7 +244,10 @@ async function callGeminiGenerateContent(args: {
     throw new Error('LLM bos veya gecersiz bir yanit dondurdu.');
   }
 
-  return text.trim();
+  return {
+    model: args.model,
+    text: text.trim(),
+  };
 }
 
 export async function generateCityAnswer(args: GenerateAnswerArgs) {
@@ -252,7 +276,7 @@ export async function generateCityAnswer(args: GenerateAnswerArgs) {
     },
   ];
 
-  const answer =
+  const geminiResponse =
     providerConfig.provider === 'gemini'
       ? await callGeminiGenerateContent({
           baseUrl: providerConfig.baseUrl,
@@ -260,17 +284,20 @@ export async function generateCityAnswer(args: GenerateAnswerArgs) {
           model: providerConfig.model,
           messages,
         })
-      : await callOpenAiCompatibleChat({
-          baseUrl: providerConfig.baseUrl,
-          apiKey: providerConfig.apiKey,
-          model: providerConfig.model,
-          messages,
-        });
+      : null;
+  const answer =
+    geminiResponse?.text ??
+    (await callOpenAiCompatibleChat({
+      baseUrl: providerConfig.baseUrl,
+      apiKey: providerConfig.apiKey,
+      model: providerConfig.model,
+      messages,
+    }));
 
   return {
     provider: providerConfig.provider,
     baseUrl: providerConfig.baseUrl,
-    model: providerConfig.model,
+    model: geminiResponse?.model ?? providerConfig.model,
     answer,
   };
 }
